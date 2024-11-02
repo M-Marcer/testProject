@@ -1,0 +1,71 @@
+// This excercise retrieves data from the country rest api, gives main town and flag for the selected country
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Fetch API Example</title>
+	<h1> Select the country </h1>
+	
+	<select id = "contryDropdown">
+		<option value = ""> Select a country </option>
+	</select>
+
+	<button id="giveCountryInfo" onclick="getInfo()"> Give info </button>
+		
+
+	<div id = "countryInfo" style = "display:none">
+		<p id = "mainTown"> Main town: </p>
+		<img id = "flagImg" src = "" style = "border:solid">
+	</div>
+		
+	
+</head>
+<body>
+    <script>
+		
+		// Function activated on button onclick 
+		function getInfo(){
+			const dropdown = document.getElementById("contryDropdown");
+			const selectedOption = dropdown.options[dropdown.selectedIndex];
+			const capital = selectedOption.getAttribute('capital');	
+			
+			// Update text in p
+			const pText = document.getElementById("mainTown");
+			pText.textContent = "Main town: " + capital;
+			
+			// Update flag image
+			const flagImg = document.getElementById("flagImg");
+			const flagImgURL = selectedOption.getAttribute('flag');
+			flagImg.src = flagImgURL;
+			
+			const divBlock = document.getElementById("countryInfo");
+			divBlock.style.display = "block";
+			
+		}
+	
+        async function getCountries() {
+            const url = "https://restcountries.com/v3.1/all";
+            const response = await fetch(url);
+            const data = await response.json();  
+
+			// Get dropdown element
+			const  dropdown = document.getElementById("contryDropdown");
+						
+			data.forEach(country =>{
+				// Initialize option variable that populates the dropdown
+				const option = document.createElement("option");
+				// Set text content of the dropdown menu option
+				option.textContent = country.name.common;
+				
+				// Store relevant variables
+				option.setAttribute('capital',country.capital);
+				option.setAttribute('flag', country.flags.png);	
+				
+				dropdown.appendChild(option);
+				
+				})
+        }
+        getCountries();
+    </script>
+</body>
+</html>
