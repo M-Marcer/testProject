@@ -16,7 +16,15 @@
 	
 	<div id="countryInfo" style="display:none">
 		<p id="mainTown"> Main town: </p>
+		<p id="population"> </p>
 		<img id="flagImg" src="" style="border:solid">
+	</div>
+
+	<div id  = "currentWeather" style="display:none">
+		<h4> Current weather conditions</h4>
+		<p id = "airTemp"></p> <br>
+		<p id = "conditions"></p>
+		<img src = "" id = "conditionsIcon">
 	</div>
 	
 	<div id="map" style="width: 600px; height: 400px; margin-top: 20px;"></div>
@@ -36,6 +44,9 @@ async function getInfo() {
 	
 	// Update content of the text boxes
 	document.getElementById("mainTown").textContent = "Main town: " + (country.capital ? country.capital[0] : "Nope, some error occurred");
+	
+	document.getElementById("population").textContent = "Population: " + (country.population ? country.population[0] : "Nope, some error occurred");
+	
 	document.getElementById("flagImg").src = country.flags ? country.flags.png : "";
 				
 	const divBlock = document.getElementById("countryInfo");
@@ -44,6 +55,7 @@ async function getInfo() {
 	// Get lat long for leaflet map
 	const [latitude, longitude] = country.latlng;
 	displayMap(latitude, longitude);
+	fetchWeatherData(latitude,longitude);
 }
 
 async function getCountries() {
@@ -52,14 +64,36 @@ async function getCountries() {
 	const data = await response.json();  
 
 	const dropdown = document.getElementById("countryDropdown");
-				
+	
+	// Create an object to store countries grouped by continent
+	const continents = {};
+	
 	data.forEach(country => {
-		const option = document.createElement("option");
-		option.textContent = country.name.common;
-		option.value = country.name.common;
-				
-		dropdown.appendChild(option);
+	
+		const continent = country.continents[0];
+		const countryName = country.name.common;
+		
+		if (!continents[continent]){
+			continents[continent] = [];
+		}
+	
+		// add the country to the appropriate continent array
+		continents[continent].push(countryName);
 	});
+	
+	// Create optgroups for each continent and add countries
+	for (const continent in continents){ // Why const continent?
+		const optgroup = document.createElement("optgroup");
+		optgroup.label = continent;
+		
+		continents[continent].forEach(countryName =>{
+			const option = document.createElement("option");
+			option.textContent = countryName;
+			option.value = countryName;
+			optgroup.appendChild(option);
+		});
+		dropdown.appendChild(optgroup);
+	}
 }
 getCountries();
 
@@ -78,7 +112,7 @@ function displayMap(latitude, longitude) {
 		}).addTo(map);
 	} else {
 		// If map exists, just set the new view without creating a new map
-		map.setView([latitude, longitude], 6);
+		map.setView([latitude, longitude], 3);
 	}
 
 	// Remove any existing markers
@@ -93,6 +127,27 @@ function displayMap(latitude, longitude) {
 		.bindPopup('Selected Country')
 		.openPopup();
 }
+
+async function fetchWeatherData(latitude,longitude){
+	const apiKey = '9941dd66e36a4f688ff74913241209';
+	const apiUrl = `http://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${latitude},${longitude}`;
+	
+	// Get weather data
+	const response = await fetch(apiUrl);
+	const data = await response.json();
+
+	// Extract weather data from the response
+	const airTemp = data.current.temp_c; // Air temperature in °C
+
+	// Populate the form fields
+	//document.getElementById('location').textContent = data.location.name + ", " +data.location.region + ", " + data.location.country
+	document.getElementById('airTemp').textContent = "Air Temperature: " + airTemp + " C";
+	document.getElementById('conditions').textContent = data.current.condition.text;
+	document.getElementById('conditionsIcon').src = "https:"+data.current.condition.icon;
+	// Show div element
+	document.getElementById("currentWeather").style.display = "block";
+}
+
 </script>
 </body>
 </html>
