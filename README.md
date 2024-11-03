@@ -8,9 +8,6 @@ This project is a simple web application that allows users to select a country f
 - **Interactive Map**: Uses [Leaflet.js](https://leafletjs.com/) to show the selected country’s location on a map with a marker.
 - **Current Weather Conditions**: Fetches real-time weather data, including temperature and weather conditions, using the [WeatherAPI](https://www.weatherapi.com/).
 
-## Demo
-A live demo of the project can be accessed here: [Demo Link (if hosted)]
-
 ## Tech Stack
 - **HTML, CSS, JavaScript**: Core web technologies for building the interface.
 - **Leaflet.js**: JavaScript library for creating interactive maps.
