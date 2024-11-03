@@ -1,69 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+	<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <title>Learn about all the countries in the World!</title>
+</head>
+<body>
 	<h1> Select the country </h1>
 	
-	<select id = "contryDropdown">
-		<option value = ""> Select a country </option>
+	<select id="countryDropdown">
+		<option value=""> Select a country </option>
 	</select>
 
 	<button id="giveCountryInfo" onclick="getInfo()"> Give info </button>
-		
-
-	<div id = "countryInfo" style = "display:none">
-		<p id = "mainTown"> Main town: </p>
-		<img id = "flagImg" src = "" style = "border:solid">
+	
+	<div id="countryInfo" style="display:none">
+		<p id="mainTown"> Main town: </p>
+		<img id="flagImg" src="" style="border:solid">
 	</div>
-		
 	
-</head>
-<body>
-    <script>
-		
-		// Function activated on button onclick 
-		function getInfo(){
-			const dropdown = document.getElementById("contryDropdown");
-			const selectedOption = dropdown.options[dropdown.selectedIndex];
-			const capital = selectedOption.getAttribute('capital');	
-			
-			// Update text in p
-			const pText = document.getElementById("mainTown");
-			pText.textContent = "Main town: " + capital;
-			
-			// Update flag image
-			const flagImg = document.getElementById("flagImg");
-			const flagImgURL = selectedOption.getAttribute('flag');
-			flagImg.src = flagImgURL;
-			
-			const divBlock = document.getElementById("countryInfo");
-			divBlock.style.display = "block";
-			
-		}
-	
-        async function getCountries() {
-            const url = "https://restcountries.com/v3.1/all";
-            const response = await fetch(url);
-            const data = await response.json();  
+	<div id="map" style="width: 600px; height: 400px; margin-top: 20px;"></div>
 
-			// Get dropdown element
-			const  dropdown = document.getElementById("contryDropdown");
-						
-			data.forEach(country =>{
-				// Initialize option variable that populates the dropdown
-				const option = document.createElement("option");
-				// Set text content of the dropdown menu option
-				option.textContent = country.name.common;
+<script>	
+// Function activated on button onclick 
+async function getInfo() {
+	const dropdown = document.getElementById("countryDropdown");
+	const selectedCountry = dropdown.value;
 				
-				// Store relevant variables
-				option.setAttribute('capital',country.capital);
-				option.setAttribute('flag', country.flags.png);	
+	const url = `https://restcountries.com/v3.1/name/${selectedCountry}?fullText=true`;
+	
+	// Fetch results for the selected country
+	const response = await fetch(url);
+	const data = await response.json();
+	const country = data[0];
+	
+	// Update content of the text boxes
+	document.getElementById("mainTown").textContent = "Main town: " + (country.capital ? country.capital[0] : "Nope, some error occurred");
+	document.getElementById("flagImg").src = country.flags ? country.flags.png : "";
 				
-				dropdown.appendChild(option);
+	const divBlock = document.getElementById("countryInfo");
+	divBlock.style.display = "block";
+	
+	// Get lat long for leaflet map
+	const [latitude, longitude] = country.latlng;
+	displayMap(latitude, longitude);
+}
+
+async function getCountries() {
+	const url = "https://restcountries.com/v3.1/all";
+	const response = await fetch(url);
+	const data = await response.json();  
+
+	const dropdown = document.getElementById("countryDropdown");
 				
-				})
-        }
-        getCountries();
-    </script>
+	data.forEach(country => {
+		const option = document.createElement("option");
+		option.textContent = country.name.common;
+		option.value = country.name.common;
+				
+		dropdown.appendChild(option);
+	});
+}
+getCountries();
+
+let map; // Define a global variable to store the map instance
+
+function displayMap(latitude, longitude) {
+	// Check if a map instance already exists
+	if (!map) {
+		// Initialize the map if it does not exist
+		map = L.map('map').setView([latitude, longitude], 6); // Zoom level 6 for a country-level view
+
+		// Set up the OpenStreetMap tile layer
+		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: '© OpenStreetMap contributors'
+		}).addTo(map);
+	} else {
+		// If map exists, just set the new view without creating a new map
+		map.setView([latitude, longitude], 6);
+	}
+
+	// Remove any existing markers
+	map.eachLayer(function(layer) {
+		if (layer instanceof L.Marker) {
+			map.removeLayer(layer);
+		}
+	});
+
+	// Add a marker at the specified coordinates
+	L.marker([latitude, longitude]).addTo(map)
+		.bindPopup('Selected Country')
+		.openPopup();
+}
+</script>
 </body>
 </html>
